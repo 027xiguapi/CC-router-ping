@@ -6,20 +6,21 @@
 
 ```
 CC-router-ping/
+├── api/                # Vercel Serverless Functions (API路由中转)
+│   ├── status.js       # 获取状态API
+│   ├── endpoint.js     # 添加端点API
+│   └── test.js         # 手动测试API
 ├── frontend/           # 前端静态文件
-│   ├── api/           # Vercel Serverless Functions (API路由中转)
-│   │   ├── status.js  # 获取状态API
-│   │   ├── endpoint.js # 添加端点API
-│   │   └── test.js    # 手动测试API
 │   ├── index.html
 │   ├── script.js
-│   └── style.css
-├── backend/           # 后端服务（部署到独立服务器）
+│   ├── style.css
+│   └── logo.png
+├── backend/            # 后端服务（部署到独立服务器）
 │   ├── server.js
 │   ├── tester.js
 │   └── config.json
-├── vercel.json        # Vercel配置
-└── .env.example       # 环境变量示例
+├── vercel.json         # Vercel配置
+└── .env.example        # 环境变量示例
 ```
 
 ## 部署步骤

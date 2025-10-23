@@ -51,11 +51,11 @@ claude --version
 
 ```
 CC-router-ping/
-├── frontend/              # 前端静态文件
-│   ├── api/              # Vercel Serverless Functions
-│   │   ├── status.js     # 获取状态API中转
-│   │   ├── endpoint.js   # 添加端点API中转
-│   │   └── test.js       # 手动测试API中转
+├── api/                  # Vercel Serverless Functions
+│   ├── status.js         # 获取状态API中转
+│   ├── endpoint.js       # 添加端点API中转
+│   └── test.js           # 手动测试API中转
+├── frontend/             # 前端静态文件
 │   ├── index.html        # 主页面
 │   ├── style.css         # 样式文件
 │   ├── script.js         # 前端逻辑
@@ -66,6 +66,7 @@ CC-router-ping/
 │   ├── config.json       # 配置文件（含API密钥）
 │   └── package.json      # 依赖配置
 ├── vercel.json           # Vercel部署配置
+├── package.json          # 项目配置
 ├── .env.example          # 环境变量示例
 ├── DEPLOY.md             # 详细部署指南
 └── README.md             # 项目说明
@@ -88,16 +89,48 @@ CC-router-ping/
 
 4. 记录从执行命令到收到响应的完整时间作为响应时间参考
 
-## 快速开始
+## 🚀 快速开始
 
-### 1. 安装后端依赖
+### 方式一：Vercel部署（推荐）
+
+详细步骤请查看 **[DEPLOY.md](./DEPLOY.md)**
+
+**简要步骤：**
+
+1. **部署后端服务器**
+   ```bash
+   cd backend
+   npm install
+   node server.js  # 或使用 pm2
+   ```
+
+2. **部署到Vercel**
+   ```bash
+   # 安装Vercel CLI
+   npm install -g vercel
+
+   # 登录并部署
+   vercel login
+   vercel
+   ```
+
+3. **配置环境变量**
+
+   在Vercel项目设置中添加：
+   - `BACKEND_URL` = 你的后端服务器地址（如 `http://123.45.67.89:3000`）
+
+4. **访问你的Vercel域名即可！**
+
+### 方式二：本地部署
+
+#### 1. 安装后端依赖
 
 ```bash
 cd backend
 npm install
 ```
 
-### 2. 配置 API 端点
+#### 2. 配置 API 端点
 
 编辑 `backend/config.json` 文件，添加你要监控的 API 站点：
 
@@ -105,17 +138,14 @@ npm install
 {
   "endpoints": [
     {
-      "name": "官方API",
-      "apiBase": "https://api.anthropic.com",
-      "apiKey": "your-api-key-here"
-    },
-    {
-      "name": "公益站1",
-      "apiBase": "https://example.com/v1",
-      "apiKey": "sk-test-key"
+      "name": "codemirror",
+      "apiBase": "https://api.codemirror.codes/",
+      "apiKey": "sk-your-api-key",
+      "testInterval": 1,
+      "inviteLink": "https://example.com/invite"
     }
   ],
-  "testInterval": 60000,
+  "defaultTestInterval": 10,
   "timeout": 10000
 }
 ```

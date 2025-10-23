@@ -2,21 +2,14 @@
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:3000'
   : '';
-const AUTO_REFRESH_INTERVAL = 30000; // 30秒
-
-let autoRefreshTimer = null;
-let countdownTimer = null;
-let countdownSeconds = 30;
 
 // DOM 元素
 const refreshBtn = document.getElementById('refreshBtn');
-const autoRefreshToggle = document.getElementById('autoRefreshToggle');
 const themeToggle = document.getElementById('themeToggle');
 const addEndpointBtn = document.getElementById('addEndpointBtn');
 const loadingEl = document.getElementById('loading');
 const errorEl = document.getElementById('error');
 const endpointsGrid = document.getElementById('endpointsGrid');
-const countdownEl = document.getElementById('countdown');
 
 // 模态弹窗元素
 const modal = document.getElementById('addEndpointModal');
@@ -32,8 +25,8 @@ const lastUpdateEl = document.getElementById('lastUpdate');
 
 // 主题切换功能
 function initTheme() {
-    // 从 localStorage 读取保存的主题，默认为深色
-    const savedTheme = localStorage.getItem('theme') || 'dark';
+    // 从 localStorage 读取保存的主题，默认为浅色
+    const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
 }
@@ -169,61 +162,9 @@ function hideError() {
     errorEl.style.display = 'none';
 }
 
-// 倒计时
-function startCountdown() {
-    countdownSeconds = AUTO_REFRESH_INTERVAL / 1000;
-    countdownEl.textContent = countdownSeconds;
-
-    countdownTimer = setInterval(() => {
-        countdownSeconds--;
-        countdownEl.textContent = countdownSeconds;
-
-        if (countdownSeconds <= 0) {
-            countdownSeconds = AUTO_REFRESH_INTERVAL / 1000;
-        }
-    }, 1000);
-}
-
-// 停止倒计时
-function stopCountdown() {
-    if (countdownTimer) {
-        clearInterval(countdownTimer);
-        countdownTimer = null;
-    }
-}
-
-// 自动刷新
-function startAutoRefresh() {
-    stopAutoRefresh();
-    autoRefreshTimer = setInterval(fetchStatus, AUTO_REFRESH_INTERVAL);
-    startCountdown();
-}
-
-function stopAutoRefresh() {
-    if (autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
-    }
-    stopCountdown();
-}
-
 // 事件监听
 refreshBtn.addEventListener('click', () => {
     fetchStatus();
-    // 重置倒计时
-    if (autoRefreshToggle.checked) {
-        stopCountdown();
-        startCountdown();
-    }
-});
-
-autoRefreshToggle.addEventListener('change', (e) => {
-    if (e.target.checked) {
-        startAutoRefresh();
-    } else {
-        stopAutoRefresh();
-        countdownEl.textContent = '-';
-    }
 });
 
 themeToggle.addEventListener('click', toggleTheme);
@@ -290,6 +231,3 @@ addEndpointForm.addEventListener('submit', async (e) => {
 // 初始化
 initTheme();
 fetchStatus();
-if (autoRefreshToggle.checked) {
-    startAutoRefresh();
-}
