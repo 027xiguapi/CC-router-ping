@@ -1,0 +1,12 @@
+{
+  "name": "cc-router-ping-frontend",
+  "version": "1.0.0",
+  "description": "Claude Code API监控面板 - Serverless前端",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel"
+  },
+  "keywords": ["claude", "api", "monitor", "vercel", "serverless"],
+  "author": "",
+  "license": "MIT"
+}

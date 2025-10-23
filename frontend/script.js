@@ -1,4 +1,7 @@
-const API_BASE = 'http://localhost:3000';
+// API基础路径 - 使用相对路径，自动适配Vercel部署
+const API_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000'
+  : '';
 const AUTO_REFRESH_INTERVAL = 30000; // 30秒
 
 let autoRefreshTimer = null;

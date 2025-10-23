@@ -1,15 +1,39 @@
 # Claude Code API 监控系统
 
-一个用于监控 Claude Code API 公益站点连通性和响应速度的前后端项目。
+一个用于监控 Claude Code API 公益站点连通性和响应速度的全栈项目。
 
-## 功能特性
+## ✨ 功能特性
 
 - 🔍 使用 Claude CLI 实时监控多个 API 端点的连通性
 - ⚡ 检测实际响应时间和速度
 - 📊 可视化展示站点状态
-- 🔄 自动定时刷新
-- 🎨 现代化深色主题界面
+- 🔄 自动定时刷新（30秒间隔）
+- 🎨 现代化深/浅色主题切换
 - 🧵 多线程并发测试，提高效率
+- 🔗 邀请链接展示（仅在线站点显示）
+- ➕ 动态添加监控端点
+- ☁️ **Serverless架构，支持Vercel部署**
+- 🔒 **API路由中转，隐藏后端服务器IP**
+
+## 🏗️ 架构设计
+
+### Serverless架构
+
+```
+用户浏览器
+    ↓
+Vercel (前端 + API Functions)
+    ↓ (API路由中转)
+后端服务器 (独立部署)
+    ↓
+Claude CLI 测试
+```
+
+**优势：**
+- ✅ 前端部署在Vercel，全球CDN加速
+- ✅ 后端服务器IP不暴露在浏览器
+- ✅ API请求通过Vercel中转，增加安全性
+- ✅ 支持无域名的后端服务器部署
 
 ## 前置要求
 
@@ -23,19 +47,28 @@ https://docs.claude.com/claude-code
 claude --version
 ```
 
-## 项目结构
+## 📁 项目结构
 
 ```
 CC-router-ping/
-├── backend/           # 后端服务
-│   ├── server.js      # Express 服务器
-│   ├── tester.js      # Claude CLI 测试逻辑
-│   ├── config.json    # 配置文件
-│   └── package.json   # 依赖配置
-└── frontend/          # 前端页面
-    ├── index.html     # 主页面
-    ├── style.css      # 样式文件
-    └── script.js      # 前端逻辑
+├── frontend/              # 前端静态文件
+│   ├── api/              # Vercel Serverless Functions
+│   │   ├── status.js     # 获取状态API中转
+│   │   ├── endpoint.js   # 添加端点API中转
+│   │   └── test.js       # 手动测试API中转
+│   ├── index.html        # 主页面
+│   ├── style.css         # 样式文件
+│   ├── script.js         # 前端逻辑
+│   └── logo.png          # Logo图片
+├── backend/              # 后端服务（独立部署）
+│   ├── server.js         # Express 服务器
+│   ├── tester.js         # Claude CLI 测试逻辑
+│   ├── config.json       # 配置文件（含API密钥）
+│   └── package.json      # 依赖配置
+├── vercel.json           # Vercel部署配置
+├── .env.example          # 环境变量示例
+├── DEPLOY.md             # 详细部署指南
+└── README.md             # 项目说明
 ```
 
 ## 工作原理
