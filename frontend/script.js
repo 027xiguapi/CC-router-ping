@@ -73,7 +73,21 @@ function displayResults(data) {
         return;
     }
 
-    endpointsGrid.innerHTML = data.map(endpoint => `
+    // 排序：在线的端点排在前面，其他状态排在后面
+    const sortedData = [...data].sort((a, b) => {
+        // 在线状态为0，其他状态为1，这样在线的会排在前面
+        const statusA = a.status === 'online' ? 0 : 1;
+        const statusB = b.status === 'online' ? 0 : 1;
+
+        if (statusA !== statusB) {
+            return statusA - statusB;
+        }
+
+        // 如果状态相同，按名称排序
+        return a.name.localeCompare(b.name);
+    });
+
+    endpointsGrid.innerHTML = sortedData.map(endpoint => `
         <div class="endpoint-card">
             <div class="endpoint-header">
                 <div class="endpoint-name">${escapeHtml(endpoint.name)}</div>
