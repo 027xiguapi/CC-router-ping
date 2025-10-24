@@ -297,18 +297,23 @@ class APITester {
 
   /**
    * 为单个端点启动定时测试
+   * @param {Object} endpoint - 端点配置
+   * @param {Boolean} runImmediately - 是否立即执行测试（默认true）
    */
-  startEndpointTimer(endpoint) {
+  startEndpointTimer(endpoint, runImmediately = true) {
     // 配置中的间隔单位是分钟，需要转换为毫秒
     const intervalMinutes = endpoint.testInterval || this.config.defaultTestInterval || 1;
     const interval = intervalMinutes * 60 * 1000; // 转换为毫秒
 
     this.log('info', `为端点 ${endpoint.name} 启动定时测试`, {
-      interval: `${intervalMinutes}分钟`
+      interval: `${intervalMinutes}分钟`,
+      runImmediately: runImmediately
     });
 
-    // 立即执行一次测试
-    this.testEndpoint(endpoint);
+    // 根据参数决定是否立即执行测试
+    if (runImmediately) {
+      this.testEndpoint(endpoint);
+    }
 
     // 清除旧定时器（如果存在）
     if (this.timers.has(endpoint.name)) {
@@ -339,7 +344,7 @@ class APITester {
   /**
    * 重新加载配置并重启所有定时器
    */
-  reloadAndRestart() {
+  reloadAndRestart(runImmediately = false) {
     this.log('info', '重新加载配��并重启定时器');
 
     // 停止所有旧定时器
@@ -353,7 +358,7 @@ class APITester {
 
     // 为每个端点启动定时器
     this.config.endpoints.forEach(endpoint => {
-      this.startEndpointTimer(endpoint);
+      this.startEndpointTimer(endpoint, runImmediately);
     });
 
     return true;
@@ -373,7 +378,7 @@ class APITester {
       this.startEndpointTimer(endpoint);
     });
 
-    // 每5分钟重新加载一次配置（检查是否有新端点或配置变更）
+    // 每30分钟重新加载一次配置（检查是否有新端点或配置变更）
     setInterval(() => {
       this.log('info', '定期检查配置文件变更');
       const oldEndpointCount = this.config?.endpoints.length || 0;
@@ -384,7 +389,7 @@ class APITester {
         // 如果端点数量变化，重启所有定时器
         if (newEndpointCount !== oldEndpointCount) {
           this.log('info', `检测到端点数量变化 (${oldEndpointCount} -> ${newEndpointCount})，重启定时器`);
-          this.reloadAndRestart();
+          this.reloadAndRestart(true);
         } else {
           // 检查每个端点的测试间隔是否变化
           let intervalChanged = false;
@@ -397,11 +402,11 @@ class APITester {
 
           if (intervalChanged) {
             this.log('info', '检测到测试间隔变化，重启定时器');
-            this.reloadAndRestart();
+            this.reloadAndRestart(true);
           }
         }
       }
-    }, 300000); // 5分钟
+    }, 1800000); // 30分钟
   }
 }
 
