@@ -7,6 +7,7 @@ const API_BASE = window.location.hostname === 'localhost'
 const refreshBtn = document.getElementById('refreshBtn');
 const themeToggle = document.getElementById('themeToggle');
 const addEndpointBtn = document.getElementById('addEndpointBtn');
+const announcementBtn = document.getElementById('announcementBtn');
 const loadingEl = document.getElementById('loading');
 const errorEl = document.getElementById('error');
 const endpointsGrid = document.getElementById('endpointsGrid');
@@ -16,6 +17,11 @@ const modal = document.getElementById('addEndpointModal');
 const modalClose = document.getElementById('modalClose');
 const cancelBtn = document.getElementById('cancelBtn');
 const addEndpointForm = document.getElementById('addEndpointForm');
+
+// 公告弹窗元素
+const announcementModal = document.getElementById('announcementModal');
+const announcementModalClose = document.getElementById('announcementModalClose');
+const closeAnnouncementBtn = document.getElementById('closeAnnouncementBtn');
 
 // 统计元素
 const totalEndpointsEl = document.getElementById('totalEndpoints');
@@ -200,6 +206,26 @@ cancelBtn.addEventListener('click', () => {
 modal.addEventListener('click', (e) => {
     if (e.target === modal) {
         modal.classList.remove('show');
+    }
+});
+
+// 公告弹窗事件监听
+announcementBtn.addEventListener('click', () => {
+    announcementModal.classList.add('show');
+});
+
+announcementModalClose.addEventListener('click', () => {
+    announcementModal.classList.remove('show');
+});
+
+closeAnnouncementBtn.addEventListener('click', () => {
+    announcementModal.classList.remove('show');
+});
+
+// 点击公告模态框外部关闭
+announcementModal.addEventListener('click', (e) => {
+    if (e.target === announcementModal) {
+        announcementModal.classList.remove('show');
     }
 });
 

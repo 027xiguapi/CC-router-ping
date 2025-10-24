@@ -340,6 +340,59 @@ h1 {
     background: var(--text-secondary);
 }
 
+.btn-info {
+    background: #0ea5e9;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #0284c7;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+}
+
+/* 公告弹窗样式 */
+.announcement-content {
+    padding: 20px 0;
+}
+
+.announcement-content p {
+    margin-bottom: 16px;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.announcement-content h3 {
+    color: var(--primary-color);
+    margin-bottom: 16px;
+    font-size: 1.2rem;
+}
+
+.announcement-content ul {
+    margin: 20px 0;
+    padding-left: 20px;
+}
+
+.announcement-content li {
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.announcement-content strong {
+    color: var(--primary-color);
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
 /* 模态弹窗 */
 .modal {
     display: none;
