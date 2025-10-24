@@ -8,7 +8,6 @@ class APITester {
     this.config = null;
     this.results = new Map();
     this.testingEndpoints = new Set(); // 记录正在测试的端点名称
-    this.timers = new Map(); // 存储每个端点的定时器
   }
 
   /**
@@ -296,76 +295,49 @@ class APITester {
   }
 
   /**
-   * 为单个端点启动定时测试
-   * @param {Object} endpoint - 端点配置
-   * @param {Boolean} runImmediately - 是否立即执行测试（默认true）
+   * 测试所有端点
    */
-  startEndpointTimer(endpoint, runImmediately = true) {
-    // 配置中的间隔单位是分钟，需要转换为毫秒
-    const intervalMinutes = endpoint.testInterval || this.config.defaultTestInterval || 1;
-    const interval = intervalMinutes * 60 * 1000; // 转换为毫秒
-
-    this.log('info', `为端点 ${endpoint.name} 启动定时测试`, {
-      interval: `${intervalMinutes}分钟`,
-      runImmediately: runImmediately
-    });
-
-    // 根据参数决定是否立即执行测试
-    if (runImmediately) {
-      this.testEndpoint(endpoint);
+  testAllEndpoints() {
+    if (!this.config || !this.config.endpoints) {
+      this.log('error', '配置不存在或端点列表为空');
+      return;
     }
 
-    // 清除旧定时器（如果存在）
-    if (this.timers.has(endpoint.name)) {
-      clearInterval(this.timers.get(endpoint.name));
-    }
+    this.log('info', `开始测试所有 ${this.config.endpoints.length} 个端点`);
 
-    // 设置新定时器
-    const timer = setInterval(() => {
-      this.log('debug', `端点 ${endpoint.name} 定时测试触发`);
-      this.testEndpoint(endpoint);
-    }, interval);
+    // 并发测试所有端点
+    const testPromises = this.config.endpoints.map(endpoint =>
+      this.testEndpoint(endpoint)
+        .then(result => ({ endpoint: endpoint.name, success: true, result }))
+        .catch(error => ({ endpoint: endpoint.name, success: false, error: error.message }))
+    );
 
-    this.timers.set(endpoint.name, timer);
-  }
+    // 等待所有测试完成
+    Promise.all(testPromises)
+      .then(results => {
+        const successCount = results.filter(r => r.success).length;
+        const failureCount = results.length - successCount;
 
-  /**
-   * 停止所有定时器
-   */
-  stopAllTimers() {
-    this.log('info', '停止所有定时测试');
-    for (const [name, timer] of this.timers.entries()) {
-      clearInterval(timer);
-      this.log('debug', `停止端点 ${name} 的定时器`);
-    }
-    this.timers.clear();
-  }
+        this.log('info', `批量测试完成`, {
+          total: results.length,
+          success: successCount,
+          failure: failureCount
+        });
 
-  /**
-   * 重新加载配置并重启所有定时器
-   */
-  reloadAndRestart(runImmediately = false) {
-    this.log('info', '重新加载配��并重启定时器');
-
-    // 停止所有旧定时器
-    this.stopAllTimers();
-
-    // 重新加载配置
-    if (!this.loadConfig()) {
-      this.log('error', '配置加载失败，无法重启定时器');
-      return false;
-    }
-
-    // 为每个端点启动定时器
-    this.config.endpoints.forEach(endpoint => {
-      this.startEndpointTimer(endpoint, runImmediately);
-    });
-
-    return true;
+        // 记录失败的端点
+        results.forEach(result => {
+          if (!result.success) {
+            this.log('error', `端点 ${result.endpoint} 测试失败`, { error: result.error });
+          }
+        });
+      })
+      .catch(error => {
+        this.log('error', '批量测试过程中发生错误', { error: error.message });
+      });
   }
 
   startAutoTest() {
-    this.log('info', '启动独立端点定时测试系统');
+    this.log('info', '启动配置驱动的定时测试系统');
 
     // 初次加载配置
     if (!this.loadConfig()) {
@@ -373,38 +345,16 @@ class APITester {
       return;
     }
 
-    // 为每个端点启动独立定时器
-    this.config.endpoints.forEach(endpoint => {
-      this.startEndpointTimer(endpoint);
-    });
-
-    // 每30分钟重新加载一次配置（检查是否有新端点或配置变更）
+    // 每30分钟重新加载配置并测试所有端点
     setInterval(() => {
-      this.log('info', '定期检查配置文件变更');
-      const oldEndpointCount = this.config?.endpoints.length || 0;
+      this.log('info', '定期检查配置文件变更并启动测试');
 
+      // 重新加载配置
       if (this.loadConfig()) {
-        const newEndpointCount = this.config.endpoints.length;
+        this.log('info', `配置重新加载成功，开始测试 ${this.config.endpoints.length} 个端点`);
 
-        // 如果端点数量变化，重启所有定时器
-        if (newEndpointCount !== oldEndpointCount) {
-          this.log('info', `检测到端点数量变化 (${oldEndpointCount} -> ${newEndpointCount})，重启定时器`);
-          this.reloadAndRestart(true);
-        } else {
-          // 检查每个端点的测试间隔是否变化
-          let intervalChanged = false;
-          this.config.endpoints.forEach(endpoint => {
-            const oldResult = this.results.get(endpoint.name);
-            if (oldResult && oldResult.testInterval !== endpoint.testInterval) {
-              intervalChanged = true;
-            }
-          });
-
-          if (intervalChanged) {
-            this.log('info', '检测到测试间隔变化，重启定时器');
-            this.reloadAndRestart(true);
-          }
-        }
+        // 测试所有端点
+        this.testAllEndpoints();
       }
     }, 1800000); // 30分钟
   }
