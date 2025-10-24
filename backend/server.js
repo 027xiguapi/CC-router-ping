@@ -151,8 +151,9 @@ app.post('/api/endpoint', (req, res) => {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
     log('info', '端点已添加并保存到配置文件', { name });
 
-    // 重新加载配置并重启定时器
-    tester.reloadAndRestart();
+    // 重新加载配置并测试所有端点
+    tester.loadConfig();
+    tester.testAllEndpoints();
 
     res.json({
       success: true,
