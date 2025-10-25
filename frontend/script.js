@@ -11,6 +11,7 @@ const announcementBtn = document.getElementById('announcementBtn');
 const loadingEl = document.getElementById('loading');
 const errorEl = document.getElementById('error');
 const endpointsGrid = document.getElementById('endpointsGrid');
+const errorDetailsEl = document.getElementById('errorDetails');
 
 // 模态弹窗元素
 const modal = document.getElementById('addEndpointModal');
@@ -101,7 +102,10 @@ function displayResults(data) {
             </div>
             <div class="endpoint-url-row">
                 <div class="endpoint-url">${escapeHtml(endpoint.apiBase)}</div>
-                ${endpoint.status === 'online' && endpoint.inviteLink ? `<a href="${escapeHtml(endpoint.inviteLink)}" target="_blank" class="invite-link" title="点击访问邀请链接">邀请链接</a>` : ''}
+                ${endpoint.status === 'online' && endpoint.inviteLink ?
+                    `<a href="${escapeHtml(endpoint.inviteLink)}" target="_blank" class="invite-link" title="点击访问邀请链接">邀请链接</a>` : ''}
+                ${endpoint.error && endpoint.status !== 'online' ?
+                    `<span class="error-indicator" onclick="showErrorDetails('${escapeHtml(endpoint.name)}', '${escapeHtml(endpoint.error).replace(/'/g, "\\'")}', event)" title="点击查看错误详情">查看错误</span>` : ''}
             </div>
             <div class="endpoint-metrics">
                 <div class="metric">
@@ -115,7 +119,6 @@ function displayResults(data) {
                     <span class="metric-value">${endpoint.lastChecked ? formatTime(new Date(endpoint.lastChecked)) : '-'}</span>
                 </div>
             </div>
-            ${endpoint.error ? `<div class="error-message">错误: ${escapeHtml(endpoint.error)}</div>` : ''}
         </div>
     `).join('');
 }
@@ -266,6 +269,40 @@ addEndpointForm.addEventListener('submit', async (e) => {
     } catch (error) {
         alert('添加失败：' + error.message);
     }
+});
+
+// 显示错误详情浮动框
+function showErrorDetails(endpointName, errorMessage, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+
+    errorDetailsEl.innerHTML = `
+        <strong>${escapeHtml(endpointName)} - 错误详情</strong><br>
+        ${escapeHtml(errorMessage)}
+    `;
+
+    // 定位浮动框在点击位置附近
+    const rect = event.target.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+    errorDetailsEl.style.left = (rect.left + scrollLeft) + 'px';
+    errorDetailsEl.style.top = (rect.bottom + scrollTop + 5) + 'px';
+    errorDetailsEl.classList.add('show');
+}
+
+// 点击其他地方关闭错误详情浮动框
+document.addEventListener('click', (event) => {
+    if (!event.target.classList.contains('error-indicator') &&
+        !event.target.closest('#errorDetails')) {
+        errorDetailsEl.classList.remove('show');
+    }
+});
+
+// 防止点击浮动框内容时关闭
+errorDetailsEl.addEventListener('click', (event) => {
+    event.stopPropagation();
 });
 
 // 初始化
