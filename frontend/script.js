@@ -74,97 +74,54 @@ async function fetchStatus() {
     }
 }
 
-// 显示结果 - 分组显示
+// 显示结果
 function displayResults(data) {
     if (!data || data.length === 0) {
-        endpointsGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">暂无数据</p>';
+        endpointsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">暂无数据</p>';
         return;
     }
 
-    // 按 URL 分组
-    const groupedData = data.reduce((groups, endpoint) => {
-        const url = endpoint.apiBase;
-        if (!groups[url]) {
-            groups[url] = [];
+    // 排序：在线的端点排在前面，其他状态排在后面
+    const sortedData = [...data].sort((a, b) => {
+        // 在线状态为0，其他状态为1，这样在线的会排在前面
+        const statusA = a.status === 'online' ? 0 : 1;
+        const statusB = b.status === 'online' ? 0 : 1;
+
+        if (statusA !== statusB) {
+            return statusA - statusB;
         }
-        groups[url].push(endpoint);
-        return groups;
-    }, {});
 
-    // 对每个分组内的端点进行排序
-    Object.keys(groupedData).forEach(url => {
-        groupedData[url].sort((a, b) => {
-            // 在线状态为0，其他状态为1，这样在线的会排在前面
-            const statusA = a.status === 'online' ? 0 : 1;
-            const statusB = b.status === 'online' ? 0 : 1;
-
-            if (statusA !== statusB) {
-                return statusA - statusB;
-            }
-
-            // 如果状态相同，按名称排序
-            return a.name.localeCompare(b.name);
-        });
+        // 如果状态相同，按名称排序
+        return a.name.localeCompare(b.name);
     });
 
-    // 对分组进行排序（按URL）
-    const sortedUrls = Object.keys(groupedData).sort();
-
-    // 生成分组HTML
-    endpointsGrid.innerHTML = sortedUrls.map(url => {
-        const endpoints = groupedData[url];
-        const onlineCount = endpoints.filter(e => e.status === 'online').length;
-        const offlineCount = endpoints.filter(e => e.status === 'offline' || e.status === 'error').length;
-        const testingCount = endpoints.filter(e => e.status === 'testing').length;
-        const groupId = url.replace(/[^a-zA-Z0-9]/g, '_');
-
-        return `
-            <div class="endpoint-group" id="group-${groupId}">
-                <div class="endpoint-group-header" onclick="toggleGroup('${groupId}')">
-                    <div class="group-url">
-                        <span class="expand-icon">▼</span>
-                        <span class="group-url-text">${escapeHtml(url)}</span>
-                    </div>
-                    <div class="group-stats">
-                        ${onlineCount > 0 ? `<div class="group-stat online">● ${onlineCount} 在线</div>` : ''}
-                        ${offlineCount > 0 ? `<div class="group-stat offline">● ${offlineCount} 离线</div>` : ''}
-                        ${testingCount > 0 ? `<div class="group-stat testing">● ${testingCount} 测试中</div>` : ''}
-                    </div>
+    endpointsGrid.innerHTML = sortedData.map(endpoint => `
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <div class="endpoint-name">${escapeHtml(endpoint.name)}</div>
+                <span class="status-badge ${endpoint.status}">${getStatusText(endpoint.status)}</span>
+            </div>
+            <div class="endpoint-url-row">
+                <div class="endpoint-url">${escapeHtml(endpoint.apiBase)}</div>
+                ${endpoint.status === 'online' && endpoint.inviteLink ?
+                    `<a href="${escapeHtml(endpoint.inviteLink)}" target="_blank" class="invite-link" title="点击访问邀请链接">邀请链接</a>` : ''}
+                ${endpoint.error && endpoint.status !== 'online' ?
+                    `<span class="error-indicator" onclick="showErrorDetails('${escapeHtml(endpoint.name)}', '${escapeHtml(endpoint.error).replace(/'/g, "\\'")}', event)" title="点击查看错误详情">查看错误</span>` : ''}
+            </div>
+            <div class="endpoint-metrics">
+                <div class="metric">
+                    <span class="metric-label">响应时间</span>
+                    <span class="metric-value ${getSpeedClass(endpoint.responseTime)}">
+                        ${endpoint.responseTime ? endpoint.responseTime + ' ms' : '-'}
+                    </span>
                 </div>
-                <div class="endpoint-group-content">
-                    <div class="endpoints-list">
-                        ${endpoints.map(endpoint => `
-                            <div class="endpoint-card">
-                                <div class="endpoint-header">
-                                    <div class="endpoint-name">${escapeHtml(endpoint.name)}</div>
-                                    <span class="status-badge ${endpoint.status}">${getStatusText(endpoint.status)}</span>
-                                </div>
-                                <div class="endpoint-url-row">
-                                    <div class="endpoint-url">${escapeHtml(endpoint.apiBase)}</div>
-                                    ${endpoint.status === 'online' && endpoint.inviteLink ?
-                                        `<a href="${escapeHtml(endpoint.inviteLink)}" target="_blank" class="invite-link" title="点击访问邀请链接">邀请链接</a>` : ''}
-                                    ${endpoint.error && endpoint.status !== 'online' ?
-                                        `<span class="error-indicator" onclick="showErrorDetails('${escapeHtml(endpoint.name)}', '${escapeHtml(endpoint.error).replace(/'/g, "\\'")}', event)" title="点击查看错误详情">查看错误</span>` : ''}
-                                </div>
-                                <div class="endpoint-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">响应时间</span>
-                                        <span class="metric-value ${getSpeedClass(endpoint.responseTime)}">
-                                            ${endpoint.responseTime ? endpoint.responseTime + ' ms' : '-'}
-                                        </span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">最后检测</span>
-                                        <span class="metric-value">${endpoint.lastChecked ? formatTime(new Date(endpoint.lastChecked)) : '-'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+                <div class="metric">
+                    <span class="metric-label">最后检测</span>
+                    <span class="metric-value">${endpoint.lastChecked ? formatTime(new Date(endpoint.lastChecked)) : '-'}</span>
                 </div>
             </div>
-        `;
-    }).join('');
+        </div>
+    `).join('');
 }
 
 // 更新统计数据
@@ -343,20 +300,6 @@ document.addEventListener('click', (event) => {
         errorDetailsEl.classList.remove('show');
     }
 });
-
-// 切换分组展开/折叠状态
-function toggleGroup(groupId) {
-    const group = document.getElementById(`group-${groupId}`);
-    const expandIcon = group.querySelector('.expand-icon');
-
-    if (group.classList.contains('collapsed')) {
-        group.classList.remove('collapsed');
-        expandIcon.classList.remove('collapsed');
-    } else {
-        group.classList.add('collapsed');
-        expandIcon.classList.add('collapsed');
-    }
-}
 
 // 防止点击浮动框内容时关闭
 errorDetailsEl.addEventListener('click', (event) => {
