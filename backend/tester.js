@@ -92,7 +92,7 @@ class APITester {
           responseTime: `${responseTime}ms`,
           errorPreview: output.substring(0, 200)
         });
-      } else if (output.includes('成功')) {
+      } else if (output.includes('成功') || output.includes('我') || output.includes('你')) {
         result.status = 'online';
         result.error = null;
         this.log('success', `端点 ${endpoint.name} 在线`, {
@@ -101,6 +101,7 @@ class APITester {
       } else {
         result.status = 'error';
         result.error = '未检测到成功标识';
+        this.log('error', `端点 ${endpoint.name} 响应异常，返回内容为${output}`);
         this.log('warn', `端点 ${endpoint.name} 响应异常 (未检测到成功标识)`, {
           responseTime: `${responseTime}ms`,
           outputPreview: output.substring(0, 200)
@@ -146,7 +147,7 @@ class APITester {
       // 修复1: 使用双引号，Windows shell 兼容性更好
       // 修复2: 添加 stdio 配置，忽略 stdin
       // 修复3: 添加超时机制
-      const child = spawn('claude', ['--print', '请回复"成功"'], {
+      const child = spawn('claude', ['--print', '请回复"测试成功"'], {
         env: env,
         shell: true,
         stdio: ['ignore', 'pipe', 'pipe'], // 忽略stdin，避免等待输入
@@ -199,6 +200,17 @@ class APITester {
         });
 
         if (code !== 0 && output.length === 0) {
+          // 添加详细日志来定位问题
+          this.log('error', '命令执行失败 - 详细诊断信息', {
+            exitCode: code,
+            stdoutLength: stdout.length,
+            stderrLength: stderr.length,
+            stdoutContent: stdout,
+            stderrContent: stderr,
+            apiBase: apiBase,
+            signal: child.signalCode,
+            spawnError: child.spawnargs
+          });
           reject(new Error(`命令执行失败，退出码: ${code}`));
         } else {
           // 返回完整输出（包含stdout和stderr）
